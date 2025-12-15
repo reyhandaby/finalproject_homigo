@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const token =
     request.cookies.get("token")?.value || getTokenFromHeader(request);
   const path = request.nextUrl.pathname;
@@ -55,13 +55,9 @@ export function middleware(request: NextRequest) {
         return response;
       }
 
-      if (
-      payload.role === "TENANT" &&
-      isUserRoute &&
-      path !== "/profile"
-    ) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
+      if (payload.role === "TENANT" && isUserRoute && path !== "/profile") {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
 
       if (payload.role === "USER" && isTenantRoute) {
         return NextResponse.redirect(new URL("/", request.url));
@@ -85,3 +81,4 @@ function getTokenFromHeader(request: NextRequest): string | null {
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };
+

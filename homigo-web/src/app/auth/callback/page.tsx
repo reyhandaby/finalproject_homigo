@@ -1,15 +1,10 @@
-"use client";
-import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+import CallbackHandler from "./CallbackHandler";
 
 export default function AuthCallback() {
-  const sp = useSearchParams();
-  const router = useRouter();
-  useEffect(() => {
-    const token = sp.get("token");
-    const role = sp.get("role");
-    if (token) localStorage.setItem("token", token);
-    if (role === "TENANT") router.replace("/tenant/dashboard"); else router.replace("/");
-  }, [sp, router]);
-  return <div className="p-6">Mengautentikasi...</div>;
+  return (
+    <Suspense fallback={<div className="p-6">Mengautentikasi...</div>}>
+      <CallbackHandler />
+    </Suspense>
+  );
 }
