@@ -1,0 +1,238 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String                   @id @default(cuid())
+  email           String                   @unique
+  name            String?
+  avatarUrl       String?   // secure_url dari Cloudinary
+  avatarPublicId  String?   // public_id Cloudinary (WAJIB untuk replace/delete)
+  role            Role
+  isVerified      Boolean                  @default(false)
+  passwordHash    String?
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  bookings        Booking[]
+  emailTokens     EmailVerificationToken[]
+  resetTokens     PasswordResetToken[]
+  reviews         Review[]
+  tenantProfile   TenantProfile?
+}
+
+
+model TenantProfile {
+  id         String     @id @default(cuid())
+  userId     String     @unique
+  company    String?
+  phone      String?
+  address    String?
+  properties Property[]
+  user       User       @relation(fields: [userId], references: [id])
+}
+
+model Category {
+  id         String     @id @default(cuid())
+  name       String     @unique
+  createdAt  DateTime   @default(now())
+  properties Property[]
+}
+
+model Property {
+  id          String          @id @default(cuid())
+  tenantId    String
+  name        String
+  slug        String          @unique
+  description String?
+  address     String?
+  city        String
+  latitude    Float?
+  longitude   Float?
+  categoryId  String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  bookings    Booking[]
+  category    Category?       @relation(fields: [categoryId], references: [id])
+  tenant      TenantProfile   @relation(fields: [tenantId], references: [id])
+  images      PropertyImage[]
+  rooms       Room[]
+  seasonRates SeasonRate[]
+  facilities  Facility[]      @relation("FacilityToProperty")
+
+  @@index([tenantId])
+  @@index([city])
+}
+
+model PropertyImage {
+  id         String   @id @default(cuid())
+  propertyId String
+  url        String
+  createdAt  DateTime @default(now())
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model Room {
+  id             String             @id @default(cuid())
+  propertyId     String
+  name           String
+  description    String?
+  basePrice      Decimal            @db.Decimal(12, 2)
+  capacityGuests Int                @default(1)
+  beds           Int                @default(1)
+  baths          Int                @default(1)
+  createdAt      DateTime           @default(now())
+  bookings       Booking[]
+  property       Property           @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  availabilities RoomAvailability[]
+  images         RoomImage[]
+  seasonRates    SeasonRate[]
+
+  @@index([propertyId])
+}
+
+model RoomImage {
+  id        String   @id @default(cuid())
+  roomId    String
+  url       String
+  createdAt DateTime @default(now())
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+}
+
+model RoomAvailability {
+  id            String   @id @default(cuid())
+  roomId        String
+  date          DateTime
+  isAvailable   Boolean  @default(true)
+  overridePrice Decimal? @db.Decimal(12, 2)
+  room          Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, date])
+  @@index([date])
+}
+
+model SeasonRate {
+  id         String    @id @default(cuid())
+  propertyId String?
+  roomId     String?
+  type       RateType
+  value      Decimal   @db.Decimal(12, 2)
+  startDate  DateTime
+  endDate    DateTime
+  createdAt  DateTime  @default(now())
+  property   Property? @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  room       Room?     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  userId        String
+  propertyId    String
+  roomId        String
+  checkInDate   DateTime
+  checkOutDate  DateTime
+  guests        Int
+  nightlyPrice  Decimal       @db.Decimal(12, 2)
+  totalPrice    Decimal       @db.Decimal(12, 2)
+  status        BookingStatus @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  property      Property      @relation(fields: [propertyId], references: [id])
+  room          Room          @relation(fields: [roomId], references: [id])
+  user          User          @relation(fields: [userId], references: [id])
+  paymentProof  PaymentProof?
+  review        Review?
+  transaction   Transaction?
+
+  @@index([userId])
+  @@index([propertyId])
+  @@index([roomId])
+}
+
+model PaymentProof {
+  id         String   @id @default(cuid())
+  bookingId  String   @unique
+  imageUrl   String
+  uploadedAt DateTime @default(now())
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  bookingId String   @unique
+  amount    Decimal  @db.Decimal(12, 2)
+  paidAt    DateTime
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id        String    @id @default(cuid())
+  bookingId String    @unique
+  userId    String
+  rating    Int
+  comment   String?
+  reply     String?
+  repliedAt DateTime?
+  createdAt DateTime  @default(now())
+  booking   Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Facility {
+  id         String     @id @default(cuid())
+  name       String     @unique
+  createdAt  DateTime   @default(now())
+  properties Property[] @relation("FacilityToProperty")
+}
+
+enum Role {
+  USER
+  TENANT
+}
+
+enum BookingStatus {
+  PENDING
+  WAITING_CONFIRMATION
+  CONFIRMED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  WAITING_PAYMENT
+  WAITING_CONFIRMATION
+  APPROVED
+  REJECTED
+}
+
+enum RateType {
+  NOMINAL
+  PERCENTAGE
+}

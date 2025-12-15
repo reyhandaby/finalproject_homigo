@@ -1,0 +1,50 @@
+# Root Gitignore for Homigo Monorepo
+
+# Node / General
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+!*.env.example
+
+# Logs
+logs/
+*.log
+*.pid
+*.seed
+
+# Frontend (Next.js)
+homigo-web/.next/
+homigo-web/.next/cache/
+homigo-web/out/
+homigo-web/.turbo/
+homigo-web/.vercel/
+
+# Frontend build artifacts
+homigo-web/build/
+homigo-web/.coverage/
+homigo-web/coverage/
+
+# Backend (Node/Prisma)
+homigo-api/dist/
+homigo-api/build/
+homigo-api/coverage/
+homigo-api/generated/
+
+# Prisma artifacts
+homigo-api/prisma/generated/
+
+# OS files
+*.swp
+*.swo
+
