@@ -46,9 +46,10 @@ export const prisma = new PrismaClient({
       : ["error"],
 });
 
+// Disable cron jobs on Vercel serverless to avoid long-running processes
 if (
-  process.env.NODE_ENV === "production" ||
-  process.env.ENABLE_CRON === "true"
+  process.env.VERCEL !== "1" &&
+  (process.env.NODE_ENV === "production" || process.env.ENABLE_CRON === "true")
 ) {
   setupCronJobs();
 }
