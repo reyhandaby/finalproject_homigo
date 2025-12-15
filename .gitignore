@@ -47,4 +47,5 @@ homigo-api/prisma/generated/
 # OS files
 *.swp
 *.swo
+**/._*
 
